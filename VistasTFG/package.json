@@ -12,6 +12,7 @@
   "dependencies": {
     "autoprefixer": "^10.4.17",
     "axios": "^1.6.7",
+    "cine-react": "file:",
     "leaflet": "^1.9.4",
     "leaflet-routing-machine": "^3.2.12",
     "postcss": "^8.4.33",

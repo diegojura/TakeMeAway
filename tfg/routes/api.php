@@ -13,37 +13,28 @@ use App\Http\Controllers\SucursalController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\AuthController;
 
-
-
-
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
-|
-| Aquí defines los endpoints de tu API. Ya vienen protegidos por el
-| middleware 'api' (o por 'auth:sanctum' si lo añades).
-|
-*/
-/*
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
 */
 
-Route::post('/login',  [AuthController::class,'login']);
+Route::post('/login',  [AuthController::class, 'login']);
+
+// Ruta pública (sin auth)
+Route::get('/viajes', [ViajeController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
-    // Endpoints CRUD para cada recurso
+
+    // Recursos protegidos
     Route::apiResource('conductores', ConductorController::class);
     Route::apiResource('pagos', PagoController::class);
-    Route::apiResource('viajes', ViajeController::class);
     Route::apiResource('valoraciones', ValoracionController::class);
     Route::apiResource('bonos', BonoController::class);
     Route::apiResource('zonas', ZonaController::class);
     Route::apiResource('tokens', PersonalAccessTokenController::class);
     Route::apiResource('sucursales', SucursalController::class);
     Route::apiResource('usuarios', UsuarioController::class);
-    Route::get('/viajes', [ViajeController::class, 'index']);
+    // (ya NO vuelvas a declarar aquí `GET /viajes`)
 });

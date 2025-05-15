@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Viaje;
 use Illuminate\Http\Request;
+use App\Models\Viaje;
 
 class ViajeController extends Controller
 {
@@ -12,17 +12,16 @@ class ViajeController extends Controller
      */
     public function index(Request $request)
     {
-        $usuarioId = $request->query('usuario_id');
+        // 1) Validamos que venga el parámetro
+        $request->validate([
+            'usuario_id' => 'required|integer|exists:usuarios,id',
+        ]);
 
-        $viajes = Viaje::with([
-                // Traemos sólo id y nombre de cada relación
-                'usuario:id,nombre',
-                'conductor:id,nombre',
-            ])
-            // Si nos pasan usuario_id, filter
-            ->when($usuarioId, fn($q) => $q->where('usuario_id', $usuarioId))
-            ->get();
+        // 2) Consultamos los viajes de ese usuario
+        $viajes = Viaje::where('usuario_id', $request->query('usuario_id'))
+                       ->get();
 
-        return response()->json($viajes);
+        // 3) Devolvemos JSON
+        return response()->json($viajes, 200);
     }
 }

@@ -1,97 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// src/pages/Viajes.jsx
 
-export default function HistorialViajes() {
-  const [viajes, setViajes]     = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState(null);
+import React, { useState, useEffect } from 'react';
+
+export default function HistorialViajes({ usuarioId = 1 }) {
+  const [viajes, setViajes] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     async function fetchViajes() {
       try {
-        const res = await axios.get('/api/viajes', {
-          params: { usuario_id: 1 },
-        });
-
-        // Laravel devuelve aquí un array directo
-        if (Array.isArray(res.data)) {
-          setViajes(res.data);
-        } else {
-          throw new Error('Formato inesperado en API');
+        const res = await fetch(
+          `http://127.0.0.1:8000/api/viajes?usuario_id=${usuarioId}`,
+          {
+            headers: { 'Accept': 'application/json' },
+            // credentials: 'include', // sólo si usas cookies de sesión
+          }
+        );
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || `Error ${res.status}`);
         }
-      } catch (err) {
-        console.error(err);
-        setError('Error al cargar los viajes.');
-      } finally {
-        setLoading(false);
+        setViajes(await res.json());
+      } catch (e) {
+        setError(e.message);
       }
     }
     fetchViajes();
-  }, []);
+  }, [usuarioId]);
 
-  if (loading) {
-    return <p className="p-4">Cargando viajes…</p>;
-  }
-  if (error) {
-    return <p className="p-4 text-red-500">{error}</p>;
-  }
-  if (viajes.length === 0) {
-    return <p className="p-4">No hay viajes registrados para este usuario.</p>;
-  }
+  if (error) return <p className="p-4 text-red-500">Error: {error}</p>;
+  if (!viajes.length) return <p className="p-4">No hay viajes para este usuario.</p>;
 
   return (
-    <div className="min-h-screen p-4 sm:p-8 bg-gray-100 font-sans">
-      <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-center sm:text-left">
-        Historial de Viajes
-      </h1>
-
-      {/* Tarjetas en móvil */}
-      <div className="space-y-4 sm:hidden">
+    <table className="min-w-full bg-white shadow-md">
+      <thead>
+        <tr className="bg-gray-200">
+          <th className="py-2 px-4">ID</th>
+          <th className="py-2 px-4">Usuario</th>
+          <th className="py-2 px-4">Conductor</th>
+          <th className="py-2 px-4">Km</th>
+          <th className="py-2 px-4">Fecha</th>
+        </tr>
+      </thead>
+      <tbody>
         {viajes.map(v => (
-          <div key={v.id} className="bg-white rounded-lg shadow-md p-4">
-            <p>
-              <span className="font-semibold">Usuario:</span>{' '}
-              {v.usuario.nombre}
-            </p>
-            <p>
-              <span className="font-semibold">Conductor:</span>{' '}
-              {v.conductor.nombre}
-            </p>
-            <p>
-              <span className="font-semibold">Kilómetros:</span>{' '}
-              {v.kilometros}
-            </p>
-            <p>
-              <span className="font-semibold">Duración:</span>{' '}
-              {v.duracion}
-            </p>
-          </div>
+          <tr key={v.id} className="border-t">
+            <td className="py-2 px-4">{v.id}</td>
+            <td className="py-2 px-4">{v.usuario_id}</td>
+            <td className="py-2 px-4">{v.conductor_id}</td>
+            <td className="py-2 px-4">{v.kilometros}</td>
+            <td className="py-2 px-4">{new Date(v.created_at).toLocaleString()}</td>
+          </tr>
         ))}
-      </div>
-
-      {/* Tabla en desktop */}
-      <div className="hidden sm:block overflow-x-auto">
-        <table className="min-w-full bg-white rounded-md shadow-md text-base">
-          <thead>
-            <tr className="bg-gray-200 text-left">
-              <th className="py-3 px-4">Usuario</th>
-              <th className="py-3 px-4">Conductor</th>
-              <th className="py-3 px-4">Kilómetros</th>
-              <th className="py-3 px-4">Duración</th>
-            </tr>
-          </thead>
-          <tbody>
-            {viajes.map(v => (
-              <tr key={v.id} className="border-t hover:bg-gray-50 transition">
-                <td className="py-2 px-4">{v.usuario.nombre}</td>
-                <td className="py-2 px-4">{v.conductor.nombre}</td>
-                <td className="py-2 px-4">{v.kilometros}</td>
-                <td className="py-2 px-4">{v.duracion}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+      </tbody>
+    </table>
   );
 }

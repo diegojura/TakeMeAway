@@ -11,71 +11,63 @@ import './index.css';
 import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
 import L from 'leaflet';
 
-// 2) Importa estáticamente los iconos de Leaflet y configura las URLs
+// 2) Importa los iconos de Leaflet y configura las URLs
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
-import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
+import Navbar from './components/Navbar.jsx';
+import Footer from './components/Footer.jsx';
+
+import Home from './pages/Home.jsx';
+import Viajes from './pages/Viajes.jsx';
+import Conductor from './pages/Conductor.jsx';
+import Iniciosesion from './pages/Iniciosesion.jsx';
+import Registro from './pages/Registro.jsx';
+import Perfil from './pages/Perfil.jsx';
+import Iniciado from './pages/Iniciado.jsx';
+
+// 3) Fija los iconos por defecto de Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl,
   iconUrl,
-  shadowUrl,
+  shadowUrl: iconShadow,
 });
 
-// 3) Tus componentes de layout y rutas
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-
-import Home from './pages/Home';
-import Viajes from './pages/Viajes';
-import Conductor from './pages/Conductor';
-import Iniciosesion from './pages/Iniciosesion';
-import Registro from './pages/Registro';
-import Perfil from './pages/Perfil';
-import Iniciado from './pages/Iniciado';
-
-function EstructuraPrincipal() {
+// 4) Layout con navbar y footer
+function Layout() {
   return (
-    <>
+    <div className="flex flex-col min-h-screen font-sans">
       <Navbar />
-      <Outlet />
+      <main className="flex-grow">
+        <Outlet />
+      </main>
       <Footer />
-    </>
+    </div>
   );
 }
 
-function ErrorPage() {
-  return (
-    <>
-      <Navbar />
-      <div className="flex items-center justify-center h-screen text-7xl text-white text-center">
-        ¡Ups! Parece que algo ha salido mal.
-      </div>
-      <Footer />
-    </>
-  );
-}
-
-const rutas = createBrowserRouter([
+// 5) Define las rutas
+const router = createBrowserRouter([
   {
-    element: <EstructuraPrincipal />,
-    errorElement: <ErrorPage />,
+    path: '/',
+    element: <Layout />,
     children: [
-      { path: '/', element: <Home /> },
-      { path: '/Viajes', element: <Viajes /> },
-      { path: '/Conductor', element: <Conductor /> },
-      { path: '/Iniciosesion', element: <Iniciosesion /> },
-      { path: '/Registro', element: <Registro /> },
-      { path: '/Perfil', element: <Perfil /> },
-      { path: '/Iniciado', element: <Iniciado /> },
+      { index: true, element: <Home /> },
+      { path: 'viajes', element: <Viajes /> },
+      { path: 'viaje', element: <Conductor /> },
+      { path: 'Iniciosesion', element: <Iniciosesion /> },
+      { path: 'Registro', element: <Registro /> },
+      { path: 'Perfil', element: <Perfil /> },
+      { path: 'Iniciado', element: <Iniciado /> },
     ],
   },
 ]);
 
-// 4) Monta la app
+// 6) Monta la aplicación
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <RouterProvider router={rutas} />
+    <RouterProvider router={router} />
   </React.StrictMode>
 );

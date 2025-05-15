@@ -1,40 +1,48 @@
-import React, { createContext, useState, useEffect } from 'react'
-import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import api from '../services/api.js';
+import { useNavigate } from 'react-router-dom';
 
-export const AuthContext = createContext()
+const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const navigate = useNavigate()
-  const [user, setUser] = useState(null)
-  const [token, setToken] = useState(localStorage.getItem('tmw_token') || '')
+  const [user, setUser] = useState(null);
+  const nav = useNavigate();
 
-  // Configura axios con baseURL y, si tienes token, el header Authorization
   useEffect(() => {
-    axios.defaults.baseURL = import.meta.env.VITE_API_URL
-    axios.defaults.headers.common['Authorization'] = token
-      ? `Bearer ${token}`
-      : ''
-    localStorage.setItem('tmw_token', token)
-  }, [token])
+    // Al cargar la app, intenta refrescar sesión
+    api.get('/sanctum/csrf-cookie').then(() => {
+      api.get('/usuarios') // un endpoint protegido que devuelve tu info
+        .then(r => setUser(r.data))
+        .catch(() => setUser(null));
+    });
+  }, []);
 
-  const login = async (email, password) => {
-    const { data } = await axios.post('/login', { email, password })
-    setUser(data.user)
-    setToken(data.token)
-    navigate('/Iniciado')  // o la ruta que quieras tras login
-  }
+  const login = ({ email, password }) =>
+    api.post('/login', { email, password })
+      .then(() => api.get('/usuarios'))
+      .then(r => {
+        setUser(r.data);
+        nav('/viajes');
+      });
 
-  const logout = async () => {
-    await axios.post('/logout')
-    setUser(null)
-    setToken('')
-    navigate('/Iniciosesion')
-  }
+  const registro = ({ nombre, email, password }) =>
+    api.post('/usuarios', { nombre, email, password })
+      .then(() => login({ email, password }));
+
+  const logout = () =>
+    api.post('/logout')
+      .then(() => {
+        setUser(null);
+        nav('/login');
+      });
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, login, registro, logout }}>
       {children}
     </AuthContext.Provider>
-  )
+  );
+}
+
+export function useAuth() {
+  return useContext(AuthContext);
 }

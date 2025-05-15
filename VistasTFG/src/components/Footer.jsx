@@ -1,15 +1,9 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React from "react";
 
-function Footer() {
+export default function Footer() {
   return (
-    <footer className="flex flex-col items-center bg-black text-center text-white p-4">
-      <div className="w-full text-center text-sm">
-        © 2025 Copyright:&ensp;
-        <Link to="/" className="underline hover:text-gray-300">Campeones</Link>
-      </div>
+    <footer className="bg-black text-white text-center py-4 mt-8">
+      © 2025 TakeMeAway
     </footer>
   );
 }
-
-export default Footer;

@@ -8,32 +8,30 @@ use Illuminate\Database\Eloquent\Model;
 class Conductor extends Model
 {
     use HasFactory;
-    protected $table = 'conductores';  
 
-    protected $fillable = ['nombre', 'valoracion', 'zona_id', 'años_experiencia', 'vehiculo_id', 'sucursal_id'];
+    // Tabla en español
+    protected $table = 'conductores';
 
-    // Relación con Vehiculo
-    public function vehiculo()
+    // Solo estas columnas son válidas ahora
+    protected $fillable = [
+        'usuario_id',
+        'nombre',
+        'apellidos',
+        'zona_id',
+        'valoracion',
+        'lat_inicio',
+        'lng_inicio',
+    ];
+
+    // Relación con Usuario (para sacar el email)
+    public function usuario()
     {
-        return $this->belongsTo(Vehiculo::class);
-    }
-
-    // Relación con Sucursal
-    public function sucursal()
-    {
-        return $this->belongsTo(Sucursal::class);
+        return $this->belongsTo(\App\Models\Usuario::class, 'usuario_id');
     }
 
     // Relación con Zona
     public function zona()
     {
-        return $this->belongsTo(Zona::class);
-    }
-
-    // Relación de 1 a muchos con viajes
-    public function viajes()
-    {
-        return $this->hasMany(Viaje::class);
+        return $this->belongsTo(\App\Models\Zona::class, 'zona_id');
     }
 }
-

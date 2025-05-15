@@ -10,8 +10,11 @@ use App\Http\Controllers\BonoController;
 use App\Http\Controllers\ZonaController;
 use App\Http\Controllers\PersonalAccessTokenController;
 use App\Http\Controllers\SucursalController;
-use App\Http\Controllers\VehiculoController;
 use App\Http\Controllers\UsuarioController;
+use App\Http\Controllers\AuthController;
+
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -22,20 +25,25 @@ use App\Http\Controllers\UsuarioController;
 | middleware 'api' (o por 'auth:sanctum' si lo añades).
 |
 */
-
+/*
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+*/
 
-// Endpoints CRUD para cada recurso
-Route::apiResource('conductores', ConductorController::class);
-Route::apiResource('pagos', PagoController::class);
-Route::apiResource('viajes', ViajeController::class);
-Route::apiResource('valoraciones', ValoracionController::class);
-Route::apiResource('bonos', BonoController::class);
-Route::apiResource('zonas', ZonaController::class);
-Route::apiResource('tokens', PersonalAccessTokenController::class);
-Route::apiResource('sucursales', SucursalController::class);
-Route::apiResource('vehiculos', VehiculoController::class);
-Route::apiResource('usuarios', UsuarioController::class);
-Route::get('/viajes', [ViajeController::class, 'index']);
+Route::post('/login',  [AuthController::class,'login']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    // Endpoints CRUD para cada recurso
+    Route::apiResource('conductores', ConductorController::class);
+    Route::apiResource('pagos', PagoController::class);
+    Route::apiResource('viajes', ViajeController::class);
+    Route::apiResource('valoraciones', ValoracionController::class);
+    Route::apiResource('bonos', BonoController::class);
+    Route::apiResource('zonas', ZonaController::class);
+    Route::apiResource('tokens', PersonalAccessTokenController::class);
+    Route::apiResource('sucursales', SucursalController::class);
+    Route::apiResource('usuarios', UsuarioController::class);
+    Route::get('/viajes', [ViajeController::class, 'index']);
+});

@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Valoracion extends Model
 {
     use HasFactory;
-    protected $table = 'valoraciones';  
+    protected $table = 'valoraciones';
 
-    protected $fillable = ['usuario_id', 'estrellas', 'mensaje'];
+    protected $fillable = ['conductor_id','usuario_id','puntuacion','comentario'];
 
     // Relación con Usuario
     public function usuario()

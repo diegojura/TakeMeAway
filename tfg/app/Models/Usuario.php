@@ -2,30 +2,46 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
-class Usuario extends Model
+class Usuario extends Authenticatable
 {
-    use HasFactory;
+    use HasApiTokens, Notifiable;
 
-    protected $fillable = ['email', 'nombre', 'password', 'cantidad_viajes', 'zona_id'];
+    // Nombre real de la tabla
+    protected $table = 'usuarios';
 
-    // Relación de 1 a muchos con viajes
-    public function viajes()
-    {
-        return $this->hasMany(Viaje::class);
-    }
+    /** Campos asignables masivamente */
+    protected $fillable = [
+        'email',
+        'nombre',
+        'password',
+        'role',
+        'cantidad_viajes',
+        'zona_id',
+    ];
 
-    // Relación de 1 a muchos con valoraciones
-    public function valoraciones()
-    {
-        return $this->hasMany(Valoracion::class);
-    }
+    /** Campos ocultos en JSON */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
 
-    // Relación con Zona
+    /** Castings de atributos */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
+
+    // Relaciones
     public function zona()
     {
         return $this->belongsTo(Zona::class);
+    }
+
+    public function perfilConductor()
+    {
+        return $this->hasOne(Conductor::class, 'usuario_id');
     }
 }

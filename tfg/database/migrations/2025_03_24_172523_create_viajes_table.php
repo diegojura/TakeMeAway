@@ -1,25 +1,49 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+namespace App\Http\Controllers;
 
-return new class extends Migration
+use Illuminate\Http\Request;
+use App\Models\Viaje;
+use Illuminate\Support\Facades\Auth;
+
+class ViajeController extends Controller
 {
-    public function up()
-{
-    Schema::create('viajes', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('usuario_id')->constrained('usuarios'); 
-        $table->foreignId('conductor_id')->constrained('conductores');
-        $table->integer('kilometros');
-        $table->timestamps();
-    });
+    /**
+     * GET /api/viajes
+     * Devuelve la lista de viajes del usuario autenticado.
+     */
+    public function index()
+    {
+        $viajes = Viaje::with('conductor.usuario')
+                       ->where('usuario_id', Auth::id())
+                       ->get();
+
+        return response()->json($viajes, 200);
+    }
+
+    /**
+     * POST /api/viajes
+     * Guarda un nuevo viaje con los kilómetros realizados.
+     *
+     * Body JSON:
+     * {
+     *   "conductor_id": 123,
+     *   "kilometros": 15
+     * }
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'conductor_id' => 'required|integer|exists:conductores,id',
+            'kilometros'   => 'required|integer|min:0',
+        ]);
+
+        $viaje = Viaje::create([
+            'usuario_id'   => Auth::id(),
+            'conductor_id' => $request->conductor_id,
+            'kilometros'   => $request->kilometros,
+        ]);
+
+        return response()->json($viaje, 201);
+    }
 }
-
-public function down()
-{
-    Schema::dropIfExists('viajes');
-}
-
-};

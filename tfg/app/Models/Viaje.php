@@ -2,18 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Viaje extends Model
 {
-    use HasFactory;
-
     protected $table = 'viajes';
 
-    protected $fillable = [
-        'usuario_id',
-        'conductor_id',
-        'kilometros',
-    ];
+protected $fillable = ['usuario_id','conductor_id','kilometros'];
+public function usuario()   { return $this->belongsTo(Usuario::class); }
+public function conductor() { return $this->belongsTo(Conductor::class); }
+
+
 }

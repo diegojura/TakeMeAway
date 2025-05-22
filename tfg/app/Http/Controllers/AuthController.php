@@ -1,68 +1,57 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use App\Models\Usuario;
 use Illuminate\Http\Request;
+use App\Models\Usuario;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    // Registro (ya funciona en tu caso)
-    public function register(Request $request)
+    public function register(Request $req)
     {
-        $fields = $request->validate([
-            'name'                  => 'required|string',
-            'email'                 => 'required|string|email|unique:usuarios,email',
-            'password'              => 'required|string|confirmed',
+        $req->validate([
+            'name'     => 'required|string',
+            'email'    => 'required|email|unique:usuarios,email',
+            'password' => 'required|confirmed|min:6',
         ]);
 
         $user = Usuario::create([
-            'name'     => $fields['name'],
-            'email'    => $fields['email'],
-            'password' => bcrypt($fields['password']),
+            'name'     => $req->name,
+            'email'    => $req->email,
+            'password' => Hash::make($req->password),
         ]);
 
-        $token = $user->createToken('token')->plainTextToken;
+        $token = $user->createToken('api-token')->plainTextToken;
 
-        return response()->json([
-            'user'  => $user,
-            'token' => $token,
-        ], 201);
+        return response()->json(['user'=>$user,'token'=>$token], 201);
     }
 
-    // Login
-    public function login(Request $request)
+    public function login(Request $req)
     {
-        $fields = $request->validate([
-            'email'    => 'required|string|email',
-            'password' => 'required|string',
+        $req->validate([
+            'email'    => 'required|email',
+            'password' => 'required',
         ]);
 
-        // 1) Busca usuario
-        $user = Usuario::where('email', $fields['email'])->first();
-
-        // 2) Comprueba credenciales
-        if (! $user || ! Hash::check($fields['password'], $user->password)) {
-            return response()->json([
-                'message' => 'Credenciales inválidas'
-            ], 401);
+        $user = Usuario::where('email', $req->email)->firstOrFail();
+        if (! Hash::check($req->password, $user->password)) {
+            return response()->json(['message'=>'Credenciales inválidas'], 401);
         }
 
-        // 3) Crea un nuevo token
-        $token = $user->createToken('token')->plainTextToken;
-
-        return response()->json([
-            'user'  => $user,
-            'token' => $token,
-        ], 200);
+        $token = $user->createToken('api-token')->plainTextToken;
+        return response()->json(['user'=>$user,'token'=>$token], 200);
     }
 
-    // Logout
-    public function logout(Request $request)
+    public function logout(Request $req)
     {
-        $request->user()->currentAccessToken()->delete();
+        $req->user()->currentAccessToken()->delete();
+        return response()->json(null,204);
+    }
 
-        return response()->json(['message' => 'Logged out']);
+    /** Devuelve el usuario autenticado */
+    public function me(Request $req)
+    {
+        return response()->json($req->user(), 200);
     }
 }

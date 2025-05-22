@@ -12,7 +12,7 @@ class UsuarioSeeder extends Seeder
         $usuarios = [
             [
                 'email'           => 'juan@example.com',
-                'nombre'          => 'Juan Pérez',
+                'name'          => 'Juan Pérez',
                 'password'        => bcrypt('123456'),
                 'cantidad_viajes' => 10,
                 'zona_id'         => 1,
@@ -20,7 +20,7 @@ class UsuarioSeeder extends Seeder
             ],
             [
                 'email'           => 'maria@example.com',
-                'nombre'          => 'María López',
+                'name'          => 'María López',
                 'password'        => bcrypt('123456'),
                 'cantidad_viajes' => 20,
                 'zona_id'         => 2,
@@ -28,7 +28,7 @@ class UsuarioSeeder extends Seeder
             ],
             [
                 'email'           => 'pedro@example.com',
-                'nombre'          => 'Pedro García',
+                'name'          => 'Pedro García',
                 'password'        => bcrypt('123456'),
                 'cantidad_viajes' => 15,
                 'zona_id'         => 3,

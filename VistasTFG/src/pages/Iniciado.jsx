@@ -1,56 +1,38 @@
+// src/pages/Iniciado.jsx
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, useMapEvents, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
+import { useNavigate } from 'react-router-dom';
 
-function Routing({ waypoints, profile }) {
-  const map = useMap();
-  useEffect(() => {
-    if (!map) return;
-    const control = L.Routing.control({
-      waypoints,
-      router: L.Routing.osrmv1({
-        serviceUrl: 'https://router.project-osrm.org/route/v1',
-        profile, // 'foot' o 'car'
-      }),
-      addWaypoints: false,
-      draggableWaypoints: false,
-      fitSelectedRoutes: true,
-      showAlternatives: false,
-    }).addTo(map);
-    return () => map.removeControl(control);
-  }, [map, waypoints, profile]);
-  return null;
-}
+export default function Iniciado() {
+  const navigate = useNavigate();
 
-export default function Home() {
-  // A y C fijos; B desde geolocalización o fallback
   const [locationA, setLocationA] = useState('37.878865,-4.779342');
   const [locationB, setLocationB] = useState('');
   const [locationC, setLocationC] = useState('37.892500,-4.752778');
 
+  // geolocalización para B
   useEffect(() => {
+    const fallback = '37.888200,-4.779400';
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        pos => setLocationB(`${pos.coords.latitude},${pos.coords.longitude}`),
-        () => setLocationB('37.888200,-4.779400') // centro Córdoba como respaldo
+        ({ coords }) => setLocationB(`${coords.latitude},${coords.longitude}`),
+        () => setLocationB(fallback)
       );
     } else {
-      setLocationB('37.888200,-4.779400');
+      setLocationB(fallback);
     }
   }, []);
 
-  // Convierte "lat,lng" → [lat, lng]
-  const toLatLng = str => {
-    const [lat, lng] = str.split(',').map(Number);
-    return L.latLng(lat, lng);
+  // al hacer click, navegamos a /home pasando el estado
+  const handleVerPrecios = () => {
+    navigate('/home', {
+      state: { locationA, locationB, locationC }
+    });
   };
-
-  const A = toLatLng(locationA);
-  const B = toLatLng(locationB);
-  const C = toLatLng(locationC);
 
   return (
     <div className="flex flex-col min-h-screen font-sans">
@@ -88,13 +70,18 @@ export default function Home() {
               <option>Ahora</option>
             </select>
           </div>
-          <button className="bg-black text-white px-4 py-2 rounded-md w-fit">
+          <button
+            onClick={handleVerPrecios}
+            className="bg-black text-white px-4 py-2 rounded-md w-fit"
+          >
             Ver precios
           </button>
         </div>
 
-        {/* Aquí el mapa */}
-        <div className="w-full lg:w-1/2 m-4 lg:m-8 rounded-lg shadow-md overflow-hidden" style={{ height: '400px' }}>
+        <div
+          className="w-full lg:w-1/2 m-4 lg:m-8 rounded-lg shadow-md overflow-hidden"
+          style={{ height: '400px' }}
+        >
           <MapContainer
             center={[37.8882, -4.7794]}
             zoom={13}
@@ -104,12 +91,6 @@ export default function Home() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution="&copy; OpenStreetMap contributors"
             />
-
-            {/* Tramo A→B andando */}
-            <Routing waypoints={[A, B]} profile="foot" />
-
-            {/* Tramo B→C en coche */}
-            <Routing waypoints={[B, C]} profile="car" />
           </MapContainer>
         </div>
       </div>

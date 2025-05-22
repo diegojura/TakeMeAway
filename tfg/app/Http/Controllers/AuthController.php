@@ -1,32 +1,29 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Usuario;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
-    /**
-     * Registra un usuario y le emite un token.
-     */
+    // Registro (ya funciona en tu caso)
     public function register(Request $request)
     {
-        $data = $request->validate([
-            'name'                  => 'required|string|max:255',
-            'email'                 => 'required|string|email|max:255|unique:usuarios,email',
-            'password'              => ['required','confirmed', Password::defaults()],
+        $fields = $request->validate([
+            'name'                  => 'required|string',
+            'email'                 => 'required|string|email|unique:usuarios,email',
+            'password'              => 'required|string|confirmed',
         ]);
 
         $user = Usuario::create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
-            'password' => bcrypt($data['password']),
+            'name'     => $fields['name'],
+            'email'    => $fields['email'],
+            'password' => bcrypt($fields['password']),
         ]);
 
-        $token = $user->createToken('take-me-away-token')->plainTextToken;
+        $token = $user->createToken('token')->plainTextToken;
 
         return response()->json([
             'user'  => $user,
@@ -34,47 +31,38 @@ class AuthController extends Controller
         ], 201);
     }
 
-    /**
-     * Autentica y devuelve token.
-     */
+    // Login
     public function login(Request $request)
     {
-        $creds = $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required',
+        $fields = $request->validate([
+            'email'    => 'required|string|email',
+            'password' => 'required|string',
         ]);
 
-        if (! Auth::attempt($creds)) {
-            return response()->json(['message' => 'Credenciales inválidas'], 401);
+        // 1) Busca usuario
+        $user = Usuario::where('email', $fields['email'])->first();
+
+        // 2) Comprueba credenciales
+        if (! $user || ! Hash::check($fields['password'], $user->password)) {
+            return response()->json([
+                'message' => 'Credenciales inválidas'
+            ], 401);
         }
 
-        /** @var Usuario $user */
-        $user  = Auth::user();
-        $token = $user->createToken('take-me-away-token')->plainTextToken;
+        // 3) Crea un nuevo token
+        $token = $user->createToken('token')->plainTextToken;
 
         return response()->json([
             'user'  => $user,
             'token' => $token,
-        ]);
+        ], 200);
     }
 
-    /**
-     * Devuelve el usuario autenticado.
-     */
-    public function user(Request $request)
-    {
-        return response()->json($request->user());
-    }
-
-    /**
-     * Cierra sesión (revoca tokens).
-     */
+    // Logout
     public function logout(Request $request)
     {
-        /** @var Usuario $user */
-        $user = $request->user();
-        $user->tokens()->delete();
+        $request->user()->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'Sesión cerrada'], 200);
+        return response()->json(['message' => 'Logged out']);
     }
 }

@@ -3,21 +3,34 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 
 export default function RegisterPage() {
-  const { registro } = useAuth();
-  const [form, setForm] = useState({ nombre: '', email: '', password: '' });
+  const { register } = useAuth();           // aquí la función se llama "register"
+  const [form, setForm] = useState({
+    nombre: '',
+    email: '',
+    password: '',
+    password_confirmation: ''
+  });
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleChange = e =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async e => {
     e.preventDefault();
+    setError('');
     try {
-      await registro(form);
-      navigate('/');  // redirige tras registro
-    } catch {
-      setError('Error al registrarse');
+      // mapeamos nombre → name para el payload:
+      await register({
+        name: form.nombre,
+        email: form.email,
+        password: form.password,
+        password_confirmation: form.password_confirmation
+      });
+      navigate('/home');  // o a la ruta que prefieras tras registrarte
+    } catch (err) {
+      console.error(err);
+      setError('Error al registrarse. Por favor, comprueba los datos.');
     }
   };
 
@@ -33,6 +46,7 @@ export default function RegisterPage() {
           value={form.nombre}
           onChange={handleChange}
           className="w-full p-2 border mb-2"
+          required
         />
         <input
           type="email"
@@ -41,6 +55,7 @@ export default function RegisterPage() {
           value={form.email}
           onChange={handleChange}
           className="w-full p-2 border mb-2"
+          required
         />
         <input
           type="password"
@@ -48,7 +63,17 @@ export default function RegisterPage() {
           placeholder="Contraseña"
           value={form.password}
           onChange={handleChange}
+          className="w-full p-2 border mb-2"
+          required
+        />
+        <input
+          type="password"
+          name="password_confirmation"
+          placeholder="Confirmar contraseña"
+          value={form.password_confirmation}
+          onChange={handleChange}
           className="w-full p-2 border mb-4"
+          required
         />
         <button
           type="submit"

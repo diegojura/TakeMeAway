@@ -10,10 +10,13 @@ return new class extends Migration
         Schema::create('usuarios', function (Blueprint $table) {
             $table->id();
             $table->string('email')->unique();
-            $table->string('nombre');
+            $table->string('name');
             $table->string('password');
-            $table->integer('cantidad_viajes')->default(0); 
-            $table->foreignId('zona_id')->constrained('zonas');
+            $table->integer('cantidad_viajes')->default(0);
+            $table->foreignId('zona_id')
+            ->nullable()
+            ->constrained('zonas')
+            ->nullOnDelete();
             $table->timestamps();
         });
     }

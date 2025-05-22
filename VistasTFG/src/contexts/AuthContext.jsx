@@ -29,10 +29,13 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (payload) => {
-    const { data } = await api.post('/usuarios', payload);
-    // Asumimos que el endpoint devuelve token y user
+    // Llamamos al endpoint público de registro
+    const { data } = await api.post('/register', payload);
+
+    // Asumimos respuesta { user: {...}, token: '...' }
     localStorage.setItem('token', data.token);
     setUser(data.user);
+
     navigate('/home', { replace: true });
   };
 

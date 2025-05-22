@@ -12,25 +12,32 @@ use App\Http\Controllers\PersonalAccessTokenController;
 use App\Http\Controllers\SucursalController;
 use App\Http\Controllers\UsuarioController;
 
-// registro y login sin prefijo
-Route::post('register', [AuthController::class, 'register'])
-     ->name('api.register');
-Route::post('login',    [AuthController::class, 'login'])
-     ->name('api.login');
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+*/
 
-// grupo protegido
+// Rutas públicas
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login',    [AuthController::class, 'login']);
+
+// Rutas protegidas por Sanctum
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('logout', [AuthController::class, 'logout'])
-         ->name('api.logout');
+    // logout
+    Route::post('/logout', [AuthController::class, 'logout']);
 
-    Route::apiResource('viajes',       ViajeController::class);
-    Route::apiResource('conductores',  ConductorController::class);
+    // usuario autenticado
+    Route::get('/usuarios/me', [AuthController::class, 'me']);
+
+    // resto de recursos
+    Route::apiResource('viajes',      ViajeController::class)->only(['show','store','update','destroy']);
+    Route::apiResource('conductores', ConductorController::class);
     Route::apiResource('pagos',        PagoController::class);
     Route::apiResource('valoraciones', ValoracionController::class);
     Route::apiResource('bonos',        BonoController::class);
     Route::apiResource('zonas',        ZonaController::class);
-    Route::apiResource('tokens',       PersonalAccessTokenController::class)
-         ->only(['index','destroy']);
+    Route::apiResource('tokens',       PersonalAccessTokenController::class);
     Route::apiResource('sucursales',   SucursalController::class);
     Route::apiResource('usuarios',     UsuarioController::class);
 });

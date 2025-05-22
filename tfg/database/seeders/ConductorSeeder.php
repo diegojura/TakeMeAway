@@ -3,29 +3,68 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Conductor;
+use Illuminate\Support\Facades\Hash;
 use App\Models\Usuario;
 use App\Models\Zona;
+use App\Models\Conductor;
 
 class ConductorSeeder extends Seeder
 {
     public function run()
     {
-        // Asegura un usuario y una zona válidos
-        $usuario = Usuario::first() ?: Usuario::factory()->create();
-        $zona    = Zona::first()    ?: Zona::factory()->create();
+        // Aseguramos al menos una zona
+        $zona = Zona::first() ?: Zona::factory()->create();
 
-        // Inserta o actualiza un conductor de ejemplo
-        Conductor::updateOrCreate(
-            ['usuario_id' => $usuario->id],
+        // Lista de conductores a crear
+        $drivers = [
             [
-                'nombre'     => 'Juan',
+                'name'       => 'Juan Pérez',
+                'email'      => 'juan.perez@gmail.com',
                 'apellidos'  => 'Pérez',
-                'zona_id'    => $zona->id,
-                'valoracion' => 0,            // media inicial
-                'lat_inicio' => 37.888800,    // latitud de ejemplo
-                'lng_inicio' => -4.778320,    // longitud de ejemplo
-            ]
-        );
+                'lat_inicio' => 37.888800,
+                'lng_inicio' => -4.778320,
+            ],
+            [
+                'name'       => 'María López',
+                'email'      => 'maria.lopez@gmail.com',
+                'apellidos'  => 'López',
+                'lat_inicio' => 37.885000,
+                'lng_inicio' => -4.780500,
+            ],
+            [
+                'name'       => 'Carlos Gómez',
+                'email'      => 'comoandamiosbb@gmail.com',
+                'apellidos'  => 'Gómez',
+                'lat_inicio' => 37.887500,
+                'lng_inicio' => -4.776200,
+            ],
+            // Añade más si quieres…
+        ];
+
+        foreach ($drivers as $d) {
+            // 1) Creamos o actualizamos el usuario asociado
+            $user = Usuario::updateOrCreate(
+                ['email' => $d['email']],
+                [
+                    'name'     => $d['name'],
+                    'password' => Hash::make('secret123'),
+                    'zona_id'  => $zona->id,
+                ]
+            );
+
+            // 2) Creamos o actualizamos el conductor
+            Conductor::updateOrCreate(
+                ['usuario_id' => $user->id],
+                [
+                    'email'      => $d['email'],
+                    'nombre'     => $d['name'],
+                    'apellidos'  => $d['apellidos'],
+                    'zona_id'    => $zona->id,
+                    'valoracion' => 0.00,
+                    'lat_inicio' => $d['lat_inicio'],
+                    'lng_inicio' => $d['lng_inicio'],
+                ]
+            );
+        }
     }
 }

@@ -2,42 +2,79 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Usuario;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
-    /** POST /api/login */
-    public function login(Request $request)
+    /**
+     * Registra un usuario y le emite un token.
+     */
+    public function register(Request $request)
     {
-        $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required'
+        $data = $request->validate([
+            'name'                  => 'required|string|max:255',
+            'email'                 => 'required|string|email|max:255|unique:usuarios,email',
+            'password'              => ['required','confirmed', Password::defaults()],
         ]);
 
-        $user = Usuario::where('email', $request->email)->first();
+        $user = Usuario::create([
+            'name'     => $data['name'],
+            'email'    => $data['email'],
+            'password' => bcrypt($data['password']),
+        ]);
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
-            return response()->json(['error' => 'Credenciales inválidas'], 401);
-        }
-
-        $token = $user->createToken('api-token')->plainTextToken;
+        $token = $user->createToken('take-me-away-token')->plainTextToken;
 
         return response()->json([
-            'user' => [
-                'id'     => $user->id,
-                'nombre' => $user->nombre,
-                'role'   => $user->role,
-            ],
+            'user'  => $user,
+            'token' => $token,
+        ], 201);
+    }
+
+    /**
+     * Autentica y devuelve token.
+     */
+    public function login(Request $request)
+    {
+        $creds = $request->validate([
+            'email'    => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if (! Auth::attempt($creds)) {
+            return response()->json(['message' => 'Credenciales inválidas'], 401);
+        }
+
+        /** @var Usuario $user */
+        $user  = Auth::user();
+        $token = $user->createToken('take-me-away-token')->plainTextToken;
+
+        return response()->json([
+            'user'  => $user,
             'token' => $token,
         ]);
     }
 
-    /** POST /api/logout */
+    /**
+     * Devuelve el usuario autenticado.
+     */
+    public function user(Request $request)
+    {
+        return response()->json($request->user());
+    }
+
+    /**
+     * Cierra sesión (revoca tokens).
+     */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
-        return response()->json(['message' => 'Logout correcto']);
+        /** @var Usuario $user */
+        $user = $request->user();
+        $user->tokens()->delete();
+
+        return response()->json(['message' => 'Sesión cerrada'], 200);
     }
 }

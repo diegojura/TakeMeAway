@@ -2,46 +2,45 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 class Usuario extends Authenticatable
 {
-    use HasApiTokens, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
-    // Nombre real de la tabla
     protected $table = 'usuarios';
 
-    /** Campos asignables masivamente */
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int,string>
+     */
     protected $fillable = [
+        'name',
         'email',
-        'nombre',
         'password',
-        'role',
-        'cantidad_viajes',
-        'zona_id',
     ];
 
-    /** Campos ocultos en JSON */
+    /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array<int,string>
+     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /** Castings de atributos */
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string,string>
+     */
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-
-    // Relaciones
-    public function zona()
-    {
-        return $this->belongsTo(Zona::class);
-    }
-
-    public function perfilConductor()
-    {
-        return $this->hasOne(Conductor::class, 'usuario_id');
-    }
 }

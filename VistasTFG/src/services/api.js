@@ -1,11 +1,16 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api', // apunta directo a tu Laravel
+  baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  },
 });
 
-api.interceptors.request.use(cfg => {
+// Interceptor para incluir token
+api.interceptors.request.use((cfg) => {
   const token = localStorage.getItem('token');
   if (token) {
     cfg.headers.Authorization = `Bearer ${token}`;

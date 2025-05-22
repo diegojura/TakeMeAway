@@ -1,48 +1,57 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import api from '../services/api.js';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../services/api.js';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const nav = useNavigate();
 
+  // Al montar, comprueba si hay token y carga usuario
   useEffect(() => {
-    // Al cargar la app, intenta refrescar sesión
-    api.get('/sanctum/csrf-cookie').then(() => {
-      api.get('/usuarios') // un endpoint protegido que devuelve tu info
-        .then(r => setUser(r.data))
-        .catch(() => setUser(null));
-    });
+    const token = localStorage.getItem('token');
+    if (token) {
+      api.get('/usuarios/me')
+        .then(({ data }) => setUser(data))
+        .catch(() => {
+          localStorage.removeItem('token');
+          setUser(null);
+        });
+    }
   }, []);
 
-  const login = ({ email, password }) =>
-    api.post('/login', { email, password })
-      .then(() => api.get('/usuarios'))
-      .then(r => {
-        setUser(r.data);
-        nav('/viajes');
-      });
+  const login = async (credentials) => {
+    const { data } = await api.post('/login', credentials);
+    localStorage.setItem('token', data.token);
+    setUser(data.user);
+    navigate('/home', { replace: true });
+  };
 
-  const registro = ({ nombre, email, password }) =>
-    api.post('/usuarios', { nombre, email, password })
-      .then(() => login({ email, password }));
+  const register = async (payload) => {
+    const { data } = await api.post('/usuarios', payload);
+    // Asumimos que el endpoint devuelve token y user
+    localStorage.setItem('token', data.token);
+    setUser(data.user);
+    navigate('/home', { replace: true });
+  };
 
-  const logout = () =>
-    api.post('/logout')
-      .then(() => {
-        setUser(null);
-        nav('/login');
-      });
+  const logout = async () => {
+    await api.post('/logout');
+    localStorage.removeItem('token');
+    setUser(null);
+    navigate('/login', { replace: true });
+  };
 
   return (
-    <AuthContext.Provider value={{ user, login, registro, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  return useContext(AuthContext);
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth debe usarse dentro de AuthProvider');
+  return ctx;
 }

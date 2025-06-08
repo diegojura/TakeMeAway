@@ -19,5 +19,17 @@ class Viaje extends Model
         'precio',
     ];
 
+        // Relación con Usuario para acceder a su información
+    public function usuario()
+    {
+        return $this->belongsTo(Usuario::class, 'usuario_id');
+    }
+
+    // Relación con Conductor para usar sus datos
+    public function conductor()
+    {
+        return $this->belongsTo(Conductor::class, 'conductor_id');
+    }
+
 
 }

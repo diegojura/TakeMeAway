@@ -78,7 +78,7 @@ export default function Iniciado() {
     }
   }
 
-  // F) “Realizar viaje” → envía sólo conductor_id y kilometros
+    // F) “Realizar viaje” → envía datos completos del viaje
   const handleReservar = async () => {
     if (!selDriver) {
       return setError('Selecciona un conductor primero')
@@ -88,7 +88,12 @@ export default function Iniciado() {
     try {
       await api.post('/viajes', {
         conductor_id: selDriver.id,
-        kilometros:   Math.round(km*100)/100,   // decimal aceptado
+        lat_inicio:   locB[0],
+        lng_inicio:   locB[1],
+        lat_fin:      locC[0],
+        lng_fin:      locC[1],
+        precio:       selDriver.precio,
+        // el backend calcula los kilómetros reales
       })
       setDone(true)
       setError('')

@@ -35,7 +35,8 @@ class ViajeController extends Controller
     {
         $request->validate([
             'conductor_id' => 'required|integer|exists:conductores,id',
-            'kilometros'   => 'required|integer|min:0',
+    -       'kilometros'   => 'required|integer|min:0',
+    +       'kilometros'   => 'required|numeric|min:0',
         ]);
 
         $viaje = Viaje::create([
@@ -46,4 +47,7 @@ class ViajeController extends Controller
 
         return response()->json($viaje, 201);
     }
+
 }
+
+

@@ -1,113 +1,108 @@
-// src/pages/Booking.jsx
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import 'leaflet-routing-machine';
-import api from '../services/api.js';   // axios con baseURL y token en headers
-import { useAuth } from '../contexts/AuthContext.jsx';
+// src/pages/Iniciado.jsx
+import React, { useState, useEffect } from 'react'
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+import api from '../services/api'    // Axios baseURL + token
+import { useAuth } from '../contexts/AuthContext'
 
-function Routing({ waypoints, profile }) {
-  const map = useMap();
-  useEffect(() => {
-    if (!map) return;
-    const control = L.Routing.control({
-      waypoints,
-      router: L.Routing.osrmv1({
-        serviceUrl: 'https://router.project-osrm.org/route/v1',
-        profile, // 'foot' o 'car'
-      }),
-      addWaypoints: false,
-      draggableWaypoints: false,
-      fitSelectedRoutes: true,
-      showAlternatives: false,
-    }).addTo(map);
-    return () => map.removeControl(control);
-  }, [map, waypoints, profile]);
-  return null;
-}
+export default function Iniciado() {
+  const { user } = useAuth()
 
-export default function Booking() {
-  const { user } = useAuth();
+  // A) Estados principales
+  const [locB, setLocB]           = useState(null)   // Ubicación usuario
+  const [locC, setLocC]           = useState(null)   // Destino clickado
+  const [drivers, setDrivers]     = useState([])     // Conductores puros
+  const [selDriver, setSelDriver] = useState(null)   // Conductor seleccionado
+  const [error, setError]         = useState('')     // Mensajes de error
+  const [done, setDone]           = useState(false)  // Ya reservado
 
-  const [locB, setLocB] = useState(null);
-  const [locC, setLocC] = useState(null);
-
-  const [drivers, setDrivers]             = useState([]);
-  const [selectedDriver, setSelectedDriver] = useState(null);
-  const [bookingDone, setBookingDone]     = useState(false);
-  const [error, setError]                 = useState('');
-
-  // 1) geolocalización B
+  // B) Geolocalización inicial
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         ({ coords }) => setLocB([coords.latitude, coords.longitude]),
-        () => setLocB([37.8882, -4.7794])
-      );
+        ()            => setLocB([37.8882, -4.7794])
+      )
     } else {
-      setLocB([37.8882, -4.7794]);
+      setLocB([37.8882, -4.7794])
     }
-  }, []);
+  }, [])
 
-  // 2) click en mapa para fijar C
+  // C) Captura click en mapa para fijar C
   function ClickHandler() {
-    useMap().on('click', e => {
-      setLocC([e.latlng.lat, e.latlng.lng]);
-    });
-    return null;
+    useMapEvents({
+      click(e) {
+        setLocC([e.latlng.lat, e.latlng.lng])
+        setSelDriver(null)
+        setDone(false)
+        setError('')
+      }
+    })
+    return null
   }
 
-  // 3) calcular precios
-  const handleMostrarPrecios = async () => {
-    if (!locB || !locC) return;
-    try {
-      const { data } = await api.post('/calcular-precios', {
-        latB: locB[0],
-        lngB: locB[1],
-        latC: locC[0],
-        lngC: locC[1],
-      });
-      setDrivers(data);
-      setSelectedDriver(null);
-      setBookingDone(false);
-      setError('');
-    } catch (e) {
-      console.error(e);
-      setError('No se pudieron calcular precios');
-    }
-  };
+  // D) Cálculo Haversine (km)
+  function haversine([lat1, lon1], [lat2, lon2]) {
+    const R = 6371
+    const dLat = (lat2 - lat1) * Math.PI/180
+    const dLon = (lon2 - lon1) * Math.PI/180
+    const a = Math.sin(dLat/2)**2
+            + Math.cos(lat1 * Math.PI/180)
+            * Math.cos(lat2 * Math.PI/180)
+            * Math.sin(dLon/2)**2
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+    return R * c
+  }
 
-  // 4) realizar viaje: POST /api/viajes + disparar mail en servidor
-  const handleRealizarViaje = async () => {
-    if (!selectedDriver) {
-      setError('Selecciona primero un conductor');
-      return;
+  // E) “Mostrar conductores & precios”
+  const fetchDrivers = async () => {
+    if (!locB || !locC) {
+      return setError('Tienes que fijar tu ubicación (B) y destino (C)')
     }
+    try {
+      const { data } = await api.get('/conductores')
+      // data = [{ id, nombre, apellidos, usuario: { email }, lat_inicio, lng_inicio, ... }]
+      const withPrice = data.map(c => {
+        const d1 = haversine(locB, [c.lat_inicio, c.lng_inicio])
+        const d2 = haversine([c.lat_inicio, c.lng_inicio], locC)
+        const precio = Math.round((5 + d1*10*0.10 + d2*10*0.10)*100)/100
+        return { ...c, precio }
+      })
+      setDrivers(withPrice)
+      setError('')
+    } catch (e) {
+      console.error(e)
+      setError('No se pudieron cargar conductores')
+    }
+  }
+
+  // F) “Realizar viaje” → envía sólo conductor_id y kilometros
+  const handleReservar = async () => {
+    if (!selDriver) {
+      return setError('Selecciona un conductor primero')
+    }
+    // calculamos kilómetros reales B→C
+    const km = haversine(locB, locC)
     try {
       await api.post('/viajes', {
-        conductor_id: selectedDriver.id,
-        lat_inicio:   locB[0],
-        lng_inicio:   locB[1],
-        lat_fin:      locC[0],
-        lng_fin:      locC[1],
-        precio:       selectedDriver.precio,
-      });
-      setBookingDone(true);
-      setError('');
-      // tras esto, el backend habrá enviado el correo reales
-      alert('¡Viaje registrado y correo enviado!');
+        conductor_id: selDriver.id,
+        kilometros:   Math.round(km*100)/100,   // decimal aceptado
+      })
+      setDone(true)
+      setError('')
+      alert('¡Viaje guardado con éxito!')
     } catch (e) {
-      console.error(e);
-      setError('Error al registrar viaje');
+      console.error(e)
+      setError('Error al registrar el viaje')
     }
-  };
+  }
 
   return (
     <div className="flex min-h-screen">
+      {/* — Panel izquierdo — */}
       <div className="w-1/3 p-6">
-        <h2 className="text-xl font-bold mb-4">Reservar viaje</h2>
-
+        <h2 className="text-2xl font-bold mb-4">Reservar viaje</h2>
         {error && <p className="text-red-600 mb-2">{error}</p>}
 
         <p className="mb-2">
@@ -115,34 +110,32 @@ export default function Booking() {
           {locB ? `${locB[0].toFixed(6)}, ${locB[1].toFixed(6)}` : 'Cargando…'}
         </p>
 
-        <p className="mb-2">
+        <p className="mb-4">
           <strong>Destino (C):</strong>{' '}
           {locC ? `${locC[0].toFixed(6)}, ${locC[1].toFixed(6)}` : 'Haz click en el mapa'}
         </p>
 
         <button
-          onClick={handleMostrarPrecios}
+          onClick={fetchDrivers}
           className="w-full bg-black text-white py-2 rounded mb-4"
         >
-          Mostrar precios
+          Mostrar conductores & precios
         </button>
 
-        {/* Lista de conductores */}
-        {!bookingDone && drivers.map(d => (
+        {/* Lista de conductores con precio */}
+        {!done && drivers.map(d => (
           <div
             key={d.id}
             className={`border rounded p-3 mb-3 flex justify-between items-center ${
-              selectedDriver?.id === d.id ? 'bg-gray-100' : ''
+              selDriver?.id === d.id ? 'bg-gray-100' : ''
             }`}
           >
             <div>
-              <p className="font-medium">
-                {d.nombre} {d.apellidos}
-              </p>
+              <p className="font-medium">{d.nombre} {d.apellidos}</p>
               <p>Precio: {d.precio} €</p>
             </div>
             <button
-              onClick={() => setSelectedDriver(d)}
+              onClick={() => setSelDriver(d)}
               className="bg-blue-600 text-white px-3 py-1 rounded"
             >
               Seleccionar
@@ -150,10 +143,10 @@ export default function Booking() {
           </div>
         ))}
 
-        {/* Botón realizar viaje */}
-        {!bookingDone && selectedDriver && (
+        {/* Botón “Confirmar viaje” */}
+        {!done && selDriver && (
           <button
-            onClick={handleRealizarViaje}
+            onClick={handleReservar}
             className="w-full bg-black text-white py-2 rounded mt-4"
           >
             Realizar viaje
@@ -161,7 +154,7 @@ export default function Booking() {
         )}
       </div>
 
-      {/* Mapa */}
+      {/* — Mapa — */}
       <div className="flex-1">
         {locB && (
           <MapContainer
@@ -171,56 +164,63 @@ export default function Booking() {
           >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution="&copy; OpenStreetMap contributors"
+              attribution="&copy; OSM contributors"
             />
-
-            {/* Marcador cliente */}
+            {/* Marcador Usuario */}
             <Marker
               position={locB}
               icon={L.icon({ iconUrl: '/marker-icon.png' })}
             />
-
-            {/* Marcador destino */}
+            {/* Marcador Destino */}
             {locC && (
               <Marker
                 position={locC}
                 icon={L.icon({ iconUrl: '/marker-icon-red.png' })}
               />
             )}
-
-            {/* Solo el conductor seleccionado */}
-            {bookingDone && selectedDriver && (
-              <Marker
-                position={[selectedDriver.lat_inicio, selectedDriver.lng_inicio]}
-                icon={L.icon({ iconUrl: '/marker-icon-black.png' })}
-              />
-            )}
-
-            {/* Rutas: cliente→conductor→destino */}
-            {bookingDone && selectedDriver && (
+            {/* Solo ruta si ya reservado */}
+            {done && selDriver && (
               <>
+                {/* del conductor a B (a pie) */}
                 <Routing
                   waypoints={[
-                    [selectedDriver.lat_inicio, selectedDriver.lng_inicio],
-                    locB,
+                    [selDriver.lat_inicio, selDriver.lng_inicio],
+                    locB
                   ]}
                   profile="foot"
                 />
+                {/* de B a C (coche) */}
                 <Routing
-                  waypoints={[
-                    locB,
-                    locC,
-                  ]}
+                  waypoints={[locB, locC]}
                   profile="car"
                 />
               </>
             )}
-
-            {/* Click para fijar destino */}
-            <ClickHandler />
+            <ClickHandler/>
           </MapContainer>
         )}
       </div>
     </div>
-  );
+  )
+}
+
+// Helper de Routing
+function Routing({ waypoints, profile }) {
+  const map = useMapEvents({})
+  useEffect(() => {
+    if (!map) return
+    const ctl = L.Routing.control({
+      waypoints,
+      router: L.Routing.osrmv1({
+        serviceUrl: 'https://router.project-osrm.org/route/v1',
+        profile
+      }),
+      addWaypoints: false,
+      draggableWaypoints: false,
+      fitSelectedRoutes: true,
+      showAlternatives: false
+    }).addTo(map)
+    return () => map.removeControl(ctl)
+  }, [map, waypoints, profile])
+  return null
 }

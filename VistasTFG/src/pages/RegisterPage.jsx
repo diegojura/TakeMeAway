@@ -2,15 +2,31 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 
 export default function Registro() {
-  const { registro } = useAuth();
-  const [form, setForm] = useState({ nombre: '', email: '', password: '' });
+  const { register } = useAuth();
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
+  });
   const [error, setError] = useState('');
 
   const handle = e => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const submit = e => {
+  const submit = async e => {
     e.preventDefault();
-    registro(form).catch(() => setError('Error al registrarse'));
+    try {
+      await register(form);
+    } catch (err) {
+      console.error(err);
+      const errors = err.response?.data?.errors;
+      if (errors) {
+        const first = Object.values(errors)[0];
+        setError(Array.isArray(first) ? first[0] : String(first));
+      } else {
+        setError('Error al registrarse');
+      }
+    }
   };
 
   return (
@@ -38,14 +54,14 @@ export default function Registro() {
 
         <form onSubmit={submit} className="space-y-5">
           <div>
-            <label htmlFor="nombre" className="block text-sm font-medium text-black mb-1">
+            <label htmlFor="name" className="block text-sm font-medium text-black mb-1">
               Nombre
             </label>
             <input
               type="text"
-              name="nombre"
+              name="name"
               placeholder="Tu nombre"
-              value={form.nombre}
+              value={form.name}
               onChange={handle}
               className="w-full px-3 py-2 border border-black rounded-md bg-white text-black focus:outline-none focus:ring-1 focus:ring-black"
             />
@@ -74,6 +90,20 @@ export default function Registro() {
               name="password"
               placeholder="********"
               value={form.password}
+              onChange={handle}
+              className="w-full px-3 py-2 border border-black rounded-md bg-white text-black focus:outline-none focus:ring-1 focus:ring-black"
+            />
+          </div>
+
+            <div>
+            <label htmlFor="password_confirmation" className="block text-sm font-medium text-black mb-1">
+              Confirmar contraseña
+            </label>
+            <input
+              type="password"
+              name="password_confirmation"
+              placeholder="********"
+              value={form.password_confirmation}
               onChange={handle}
               className="w-full px-3 py-2 border border-black rounded-md bg-white text-black focus:outline-none focus:ring-1 focus:ring-black"
             />

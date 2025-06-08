@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import 'leaflet-routing-machine'
 import api from '../services/api'    // Axios baseURL + token
 import { useAuth } from '../contexts/AuthContext'
 

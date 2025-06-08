@@ -9,7 +9,14 @@ class Viaje extends Model
     protected $table = 'viajes';
 
     protected $fillable = [
-        'usuario_id', 'conductor_id', 'kilometros', 'precio'
+        'usuario_id',
+        'conductor_id',
+        'lat_inicio',
+        'lng_inicio',
+        'lat_fin',
+        'lng_fin',
+        'kilometros',
+        'precio',
     ];
 
 

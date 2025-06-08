@@ -84,7 +84,12 @@ class ViajeController extends Controller
         $viaje = Viaje::create([
             'usuario_id'   => Auth::id(),
             'conductor_id' => $req->conductor_id,
-            'kilometros'   => round($km,2),
+            'lat_inicio'   => $req->lat_inicio,
+            'lng_inicio'   => $req->lng_inicio,
+            'lat_fin'      => $req->lat_fin,
+            'lng_fin'      => $req->lng_fin,
+            'precio'       => $req->precio,
+            'kilometros'   => round($km, 2),
         ]);
 
         // envía correo al conductor

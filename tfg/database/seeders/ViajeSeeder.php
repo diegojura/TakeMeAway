@@ -31,6 +31,11 @@ class ViajeSeeder extends Seeder
                 'conductor_id' => $conductor->id,
             ],
             [
+                'lat_inicio'   => $conductor->lat_inicio,
+                'lng_inicio'   => $conductor->lng_inicio,
+                'lat_fin'      => $conductor->lat_inicio + 0.01,
+                'lng_fin'      => $conductor->lng_inicio + 0.01,
+                'precio'       => 10.00,
                 'kilometros'   => 12.5,
             ]
         );
@@ -39,6 +44,11 @@ class ViajeSeeder extends Seeder
         Viaje::create([
             'usuario_id'   => $usuario->id,
             'conductor_id' => $conductor->id,
+            'lat_inicio'   => $conductor->lat_inicio,
+            'lng_inicio'   => $conductor->lng_inicio,
+            'lat_fin'      => $conductor->lat_inicio + 0.02,
+            'lng_fin'      => $conductor->lng_inicio + 0.02,
+            'precio'       => 8.50,
             'kilometros'   => 7.8,
         ]);
     }

@@ -8,9 +8,13 @@ use Illuminate\Http\Request;
 class ConductorController extends Controller
 {
     public function index()
-    {
-        return response()->json(Conductor::all());
-    }
+{
+    return response()->json(
+        Conductor::with(['usuario', 'zona']) // opcional si quieres el email o zona
+                 ->withCount('viajes')
+                 ->get()
+    );
+}
 
     public function store(Request $request)
     {

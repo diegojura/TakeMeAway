@@ -34,4 +34,9 @@ class Conductor extends Model
     {
         return $this->belongsTo(\App\Models\Zona::class, 'zona_id');
     }
+
+     public function viajes()
+    {
+        return $this->hasMany(\App\Models\Viaje::class);
+    }
 }

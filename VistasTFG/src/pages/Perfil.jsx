@@ -1,8 +1,21 @@
 "use client"
 import { useAuth } from "../contexts/AuthContext.jsx"
+import { useEffect, useState } from "react"
+import api from "../services/api.js"
 
 export default function Perfil() {
-  const { user, loading } = useAuth()
+    const { user } = useAuth()
+  const [viajesCount, setViajesCount] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!user) return
+    api.get(`/viajes?usuario_id=${user.id}`)
+      .then(r => setViajesCount(r.data.length))
+      .catch(() => setViajesCount(0))
+      .finally(() => setLoading(false))
+  }, [user])
+  
 
   if (loading)
     return (
@@ -73,7 +86,9 @@ export default function Perfil() {
               </div>
               <div>
                 <p className="text-sm text-gray-500 font-medium">Viajes Realizados</p>
-                <p className="text-2xl font-bold text-black">{user.cantidad_viajes}</p>
+                <p className="text-2xl font-bold text-black">
+                  {viajesCount ?? user.cantidad_viajes ?? 0}
+                </p>
               </div>
             </div>
           </div>

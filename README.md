@@ -3,6 +3,6 @@ WAWAWA
 
 ## Setup Tips
 
-Copy `tfg/.env.example` to `tfg/.env` and update the `MAIL_*` values with your
-Gmail credentials. Ensure `MAIL_MAILER` is set to `smtp` so Laravel sends real
-emails.
+Copy `tfg/.env.example` to `tfg/.env`.
+The example is configured with `MAIL_MAILER=log` so emails are written to the log during local development.
+To send real emails set `MAIL_MAILER=smtp` and update the `MAIL_*` values with your Gmail credentials (an app password may be required).

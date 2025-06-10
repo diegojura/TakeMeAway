@@ -8,6 +8,8 @@ use App\Models\Conductor;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ViajeSolicitado; // ver más abajo
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+
 
 class ViajeController extends Controller
 {
@@ -94,8 +96,13 @@ class ViajeController extends Controller
 
         // envía correo al conductor
         $conductor = Conductor::findOrFail($req->conductor_id);
-        Mail::to($conductor->usuario->email)
-            ->send(new ViajeSolicitado($viaje));
+        try {
+            Mail::to($conductor->usuario->email)
+                ->send(new ViajeSolicitado($viaje));
+        } catch (\Throwable $e) {
+            Log::error('Error enviando correo: ' . $e->getMessage());
+            // Si falla el envío simplemente continuamos
+        }
 
         return response()->json($viaje, 201);
     }

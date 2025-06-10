@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css'
 import 'leaflet-routing-machine'
 import api from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
+import QRPayment from '../components/QRPayment'
 
 export default function Iniciado() {
   const { user } = useAuth()
@@ -17,6 +18,7 @@ export default function Iniciado() {
   const [selDriver, setSelDriver] = useState(null)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
+  const [paymentLink, setPaymentLink] = useState('')
 
   // Geolocalización inicial
   useEffect(() => {
@@ -37,6 +39,7 @@ export default function Iniciado() {
         setLocC([e.latlng.lat, e.latlng.lng])
         setSelDriver(null)
         setDone(false)
+        setPaymentLink('')
         setError('')
       }
     })
@@ -91,6 +94,8 @@ export default function Iniciado() {
         lng_fin: locC[1],
         precio: selDriver.precio,
       })
+      const url = `${selDriver.revolut_link}?amount=${selDriver.precio}&currency=EUR`
+      setPaymentLink(url)
       setDone(true)
       setError('')
       alert('¡Viaje reservado con éxito!')
@@ -175,7 +180,7 @@ export default function Iniciado() {
 
         {done && (
           <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded">
-            <p>¡Viaje reservado con éxito!</p>
+            <QRPayment url={paymentLink} />
           </div>
         )}
       </div>

@@ -4,17 +4,14 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
   headers: {
-    'Accept': 'application/json',
+    Accept: 'application/json',
     'Content-Type': 'application/json',
   },
 });
 
-// Interceptor para incluir token
-api.interceptors.request.use((cfg) => {
+api.interceptors.request.use(cfg => {
   const token = localStorage.getItem('token');
-  if (token) {
-    cfg.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) cfg.headers.Authorization = `Bearer ${token}`;
   return cfg;
 });
 

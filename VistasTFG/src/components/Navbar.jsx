@@ -67,7 +67,7 @@ export default function Navbar() {
                 <Link to="/perfil">
                   <button className="flex items-center gap-2 bg-white text-black px-5 py-2 rounded-full font-semibold hover:bg-gray-100 transition duration-200 shadow-sm">
                     <img src={Logo} alt="Perfil" className="w-5 h-5" />
-                    {user.nombre}
+                    {user.name}
                   </button>
                 </Link>
                 <button

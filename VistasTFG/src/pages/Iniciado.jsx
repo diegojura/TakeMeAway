@@ -7,13 +7,25 @@ import 'leaflet-routing-machine'
 import api from '../services/api'    // Axios baseURL + token
 import { useAuth } from '../contexts/AuthContext'
 
+// Paleta para diferenciar cada ubicación de conductor
+const COLORS = [
+  '#e6194B',
+  '#3cb44b',
+  '#ffe119',
+  '#4363d8',
+  '#f58231',
+  '#911eb4',
+  '#42d4f4',
+  '#bfef45'
+]
+
 export default function Iniciado() {
   const { user } = useAuth()
 
   // A) Estados principales
   const [locB, setLocB]           = useState(null)   // Ubicación usuario
   const [locC, setLocC]           = useState(null)   // Destino clickado
-  const [drivers, setDrivers]     = useState([])     // Conductores puros
+  const [drivers, setDrivers]     = useState([])     // Conductores con precio y color
   const [selDriver, setSelDriver] = useState(null)   // Conductor seleccionado
   const [error, setError]         = useState('')     // Mensajes de error
   const [done, setDone]           = useState(false)  // Ya reservado
@@ -64,11 +76,12 @@ export default function Iniciado() {
     try {
       const { data } = await api.get('/conductores')
       // data = [{ id, nombre, apellidos, usuario: { email }, lat_inicio, lng_inicio, ... }]
-      const withPrice = data.map(c => {
+      const withPrice = data.map((c, i) => {
         const d1 = haversine(locB, [c.lat_inicio, c.lng_inicio])
         const d2 = haversine([c.lat_inicio, c.lng_inicio], locC)
         const precio = Math.round((5 + d1*10*0.10 + d2*10*0.10)*100)/100
-        return { ...c, precio }
+        const color = COLORS[i % COLORS.length]
+        return { ...c, precio, color }
       })
       setDrivers(withPrice)
       setError('')
@@ -128,7 +141,7 @@ export default function Iniciado() {
           Mostrar conductores & precios
         </button>
 
-        {/* Lista de conductores con precio */}
+        {/* Lista de conductores con precio y color */}
         {!done && drivers.map(d => (
           <div
             key={d.id}
@@ -137,7 +150,13 @@ export default function Iniciado() {
             }`}
           >
             <div>
-              <p className="font-medium">{d.nombre} {d.apellidos}</p>
+              <p className="font-medium flex items-center">
+                <span
+                  className="inline-block w-3 h-3 rounded-full mr-2"
+                  style={{ background: d.color }}
+                />
+                {d.nombre} {d.apellidos}
+              </p>
               <p>Precio: {d.precio} €</p>
             </div>
             <button
@@ -161,13 +180,14 @@ export default function Iniciado() {
       </div>
 
       {/* — Mapa — */}
-      <div className="flex-1">
+      <div className="flex-1 flex items-center justify-center p-6">
         {locB && (
-          <MapContainer
-            center={locB}
-            zoom={13}
-            style={{ width: '100%', height: '100vh' }}
-          >
+          <div className="w-full h-[80vh] rounded-lg overflow-hidden shadow-lg">
+            <MapContainer
+              center={locB}
+              zoom={13}
+              style={{ width: '100%', height: '100%' }}
+            >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution="&copy; OSM contributors"
@@ -184,26 +204,36 @@ export default function Iniciado() {
                 icon={L.icon({ iconUrl: '/marker-icon-red.png' })}
               />
             )}
-            {/* Solo ruta si ya reservado */}
-            {done && selDriver && (
-              <>
-                {/* del conductor a B (a pie) */}
-                <Routing
-                  waypoints={[
-                    [selDriver.lat_inicio, selDriver.lng_inicio],
-                    locB
-                  ]}
-                  profile="foot"
-                />
-                {/* de B a C (coche) */}
-                <Routing
-                  waypoints={[locB, locC]}
-                  profile="car"
-                />
-              </>
-            )}
+           
+            {/* Marcadores de conductores */}
+            {drivers.map(d => (
+              <Marker
+                key={`m-${d.id}`}
+                position={[d.lat_inicio, d.lng_inicio]}
+                icon={L.divIcon({
+                  className: '',
+                  html: `<div style="background:${d.color};width:16px;height:16px;border-radius:50%;border:2px solid white"></div>`
+                })}
+              />
+            ))}
+
+            {/* Rutas de todos los conductores */}
+            {locB && locC && drivers.map(d => (
+              <Routing
+                key={`r-${d.id}`}
+                waypoints={[
+                  [d.lat_inicio, d.lng_inicio],
+                  locB,
+                  locC
+                ]}
+                profile="car"
+                color={d.color}
+              />
+            ))}
+
             <ClickHandler/>
           </MapContainer>
+           </div>
         )}
       </div>
     </div>
@@ -211,7 +241,7 @@ export default function Iniciado() {
 }
 
 // Helper de Routing
-function Routing({ waypoints, profile }) {
+function Routing({ waypoints, profile, color }) {
   const map = useMapEvents({})
   useEffect(() => {
     if (!map) return
@@ -221,12 +251,13 @@ function Routing({ waypoints, profile }) {
         serviceUrl: 'https://router.project-osrm.org/route/v1',
         profile
       }),
+      lineOptions: { styles: [{ color, weight: 4 }] },
       addWaypoints: false,
       draggableWaypoints: false,
       fitSelectedRoutes: true,
       showAlternatives: false
     }).addTo(map)
     return () => map.removeControl(ctl)
-  }, [map, waypoints, profile])
+  }, [map, waypoints, profile, color])
   return null
 }

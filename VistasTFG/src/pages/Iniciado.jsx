@@ -94,7 +94,7 @@ export default function Iniciado() {
         lng_fin: locC[1],
         precio: selDriver.precio,
       })
-      const url = `${selDriver.revolut_link}?amount=${selDriver.precio}&currency=EUR`
+      const url = `${import.meta.env.VITE_REVOLUT_LINK}?amount=${selDriver.precio}&currency=EUR`
       setPaymentLink(url)
       setDone(true)
       setError('')

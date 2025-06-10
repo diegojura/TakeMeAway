@@ -59,20 +59,19 @@ export default function Iniciado() {
     return R * c
   }
 
-  // Obtener conductores
+    // Obtener conductores con precio calculado en el backend
   const fetchDrivers = async () => {
     if (!locB || !locC) {
       return setError('Tienes que fijar tu ubicación (B) y destino (C)')
     }
     try {
-      const { data } = await api.get('/conductores')
-      const withPrice = data.map(c => {
-        const d1 = haversine(locB, [c.lat_inicio, c.lng_inicio])
-        const d2 = haversine([c.lat_inicio, c.lng_inicio], locC)
-        const precio = Math.round((5 + d1*10*0.10 + d2*10*0.10)*100)/100
-        return { ...c, precio }
+      const { data } = await api.post('/calcular-precios', {
+        latB: locB[0],
+        lngB: locB[1],
+        latC: locC[0],
+        lngC: locC[1],
       })
-      setDrivers(withPrice)
+      setDrivers(data)
       setError('')
     } catch (e) {
       console.error(e)
@@ -94,7 +93,7 @@ export default function Iniciado() {
         lng_fin: locC[1],
         precio: selDriver.precio,
       })
-      const url = `${import.meta.env.VITE_REVOLUT_LINK}?amount=${selDriver.precio}&currency=EUR`
+      const url = `${import.meta.env.VITE_REVOLUT_LINK}?amount=${selDriver.precio.toFixed(2)}&currency=EUR`
       setPaymentLink(url)
       setDone(true)
       setError('')

@@ -23,22 +23,21 @@ export default function LoginPage() {
 
   return (
     <div
-      className="relative flex items-center justify-center"
+      className="relative flex items-center justify-center px-4"
       style={{
-        minHeight: '100vh', // Ocupa toda la altura de la ventana
-        width: '100vw',      // Ocupa todo el ancho
+        minHeight: '100vh',
         backgroundImage: "url('/liberty-city-mapa.png')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        filter: 'grayscale(100%) brightness(0.5)', // Imagen más oscura para que no resalte
+        filter: 'grayscale(100%) brightness(0.7)', // ajustado igual que en registro
       }}
     >
-      {/* Overlay negro para oscurecer aún más sin perder la imagen */}
-      <div className="absolute inset-0 bg-black opacity-50 pointer-events-none"></div>
+      {/* Overlay negro */}
+      <div className="absolute inset-0 bg-black opacity-40 pointer-events-none"></div>
 
-      {/* Contenido centrado y con fondo blanco semitransparente */}
-      <div className="relative z-10 w-full max-w-md bg-white bg-opacity-90 border border-black rounded-xl p-8 shadow-md">
+      {/* Contenido centrado */}
+      <div className="relative w-full max-w-md bg-white bg-opacity-90 border border-black rounded-xl p-8 shadow-md z-10">
         <h1 className="text-3xl font-semibold text-black text-center mb-6">Iniciar sesión</h1>
 
         {error && (

@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
     const { data } = await api.post('/login', credentials);
     localStorage.setItem('token', data.token);
     setUser(data.user);
-    navigate('/home', { replace: true });
+    navigate('/', { replace: true });
   };
 
   const register = async (payload) => {
@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem('token', data.token);
     setUser(data.user);
 
-    navigate('/home', { replace: true });
+    navigate('/', { replace: true });
   };
 
   const logout = async () => {

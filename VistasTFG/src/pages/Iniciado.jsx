@@ -97,7 +97,6 @@ export default function Iniciado() {
       setPaymentLink(url)
       setDone(true)
       setError('')
-      alert('¡Viaje reservado con éxito!')
     } catch (e) {
       console.error(e)
       setError('Error al registrar el viaje')
@@ -178,7 +177,8 @@ export default function Iniciado() {
         )}
 
         {done && (
-          <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded">
+          <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded space-y-2">
+            <p className="font-semibold">¡Viaje reservado con éxito!</p>
             <QRPayment url={paymentLink} />
           </div>
         )}
